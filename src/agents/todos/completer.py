@@ -13,7 +13,7 @@ def archive_todo_document(doc_id: str) -> None:
     Archive a todo document because it's complete and therefore no longer relevant.
     :param: doc_id: str: The ID of the todo document to archive.
     """
-    print(f"Archiving todo document {doc_id=}...")
+    print(f"[completer.py] Archiving todo document {doc_id=}...")
     doc_path = Path("local/archives/todos") / f"{doc_id}.txt"
     assert doc_path.exists()
     doc_path.unlink()

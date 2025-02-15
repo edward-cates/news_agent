@@ -13,7 +13,7 @@ def save_todo_document(todo_document: str) -> None:
     Save a todo document to disk with a unique ID.
     :param: todo_document: str: The full txt todo document body to save.
     """
-    print("Saving todo document...")
+    print("[creator.py] Saving todo document...")
     doc_id = uuid.uuid4().hex
     date_and_time_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     full_doc = f"id: {doc_id}\n\nCreated at: {date_and_time_pretty}\n\n{todo_document}"

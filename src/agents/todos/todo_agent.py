@@ -10,6 +10,7 @@ from lasagna import (
     build_simple_agent,
     noop_callback,
     flat_messages,
+    build_standard_message_extractor,
 )
 
 from src.agents.todos.creator import create_todo_creator_agent
@@ -36,7 +37,11 @@ class TodoAgent:
                     create_todo_updater_agent(),
                     create_todo_completer_agent(),
                 ],
-            )
+                message_extractor = build_standard_message_extractor(
+                    strip_tool_messages = False,
+                    extract_from_layered_agents = True,
+                )
+            ),
         )
         agent_prompt = {
             'role': 'system',

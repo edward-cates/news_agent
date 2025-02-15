@@ -10,7 +10,7 @@ def read_todos() -> list[str]:
     """
     Read all todo txt documents and returns them as a list of strings.
     """
-    print("Reading todos...")
+    print("[summarizer.py] Reading todos...")
     todos_dir = Path("local/archives/todos")
     todos_files = todos_dir.glob("*.txt")
     return [
