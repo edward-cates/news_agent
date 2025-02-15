@@ -25,6 +25,7 @@ def create_summarizer_agent():
             tools = [read_todos],
             message_extractor = build_standard_message_extractor(
                 strip_tool_messages = False,
+                extract_from_layered_agents = True,
                 system_prompt_override="""
                     You are my personal assistant. You keep my head attached.
                     I focus hard on the current moment and forget what I'm supposed to do.

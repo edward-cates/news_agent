@@ -29,6 +29,7 @@ def create_todo_creator_agent():
             tools = [save_todo_document],
             message_extractor = build_standard_message_extractor(
                 strip_tool_messages = False,
+                extract_from_layered_agents = True,
                 system_prompt_override="""
                     Your job is to create atomic documents for every todo item.
                     If you need clarifying information to be able to track this task for me,
