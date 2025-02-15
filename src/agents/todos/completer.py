@@ -26,6 +26,7 @@ def create_todo_completer_agent():
             tools = [archive_todo_document],
             message_extractor = build_standard_message_extractor(
                 strip_tool_messages = False,
+                extract_from_layered_agents = True,
                 system_prompt_override="""
                     Your job is to archive completed todo items.
                 """.strip(),

@@ -45,6 +45,7 @@ def create_todo_updater_agent():
             tools = [overwrite_todo_document],
             message_extractor = build_standard_message_extractor(
                 strip_tool_messages = False,
+                extract_from_layered_agents = True,
                 system_prompt_override="""
                     Sometimes we don't get todo documents perfect on the first try.
                     Your job is to help me fix them, whether that means overwriting a bad doc

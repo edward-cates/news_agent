@@ -27,7 +27,6 @@ class TodoAgent:
             'role': 'human',
             'text': f"(Sent at {current_date_and_time_pretty}) {message}",
         })
-        print("debug", self.messages)
         agent = known_models.BIND_ANTHROPIC_claude_35_sonnet()(
             build_simple_agent(
                 name = 'todo_agent',
