@@ -1,16 +1,19 @@
 from lasagna import Message
 
-
 from src.database import Database
 from src.agents.news_agent import news_agent, _get_todays_headlines
 from src.agents.user_preferences_agent import user_preferences_agent
 
 class Agent:
-    def __init__(self, phone_number: str):
-        self.phone_number = phone_number
-        self.user_preferences: str = Database().read_user_preferences(phone_number)
+    def __init__(self):
+        self.phone_number = ""
+        self.user_preferences: str = ""
         self.conversation_history: list[Message] = []
         self.todays_headlines: str = _get_todays_headlines()
+
+    def set_phone_number(self, phone_number: str) -> None:
+        self.phone_number = phone_number
+        self.user_preferences: str = Database().read_user_preferences(phone_number)
 
     async def respond_to_caller(self, caller_message: str) -> str:
         print("Responding to caller...")

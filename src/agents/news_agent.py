@@ -48,6 +48,7 @@ def _get_article_html(url: str) -> str:
         # Strip HTML tags and limit to 10k chars
         soup = BeautifulSoup(response.text, 'html.parser')
         text = soup.get_text(separator=' ', strip=True)
+        print(f"Success getting article: {text[:10000]}")
         return text[:10000]
     except Exception as e:
         traceback.print_exc()
@@ -66,7 +67,7 @@ async def news_agent(
     system_prompt = {
         'role': 'system',
         'text': '\n'.join([
-            'You are an over-the-phone news browsing assistant. No responses > 3 sentences!',
+            'You are an over-the-phone news browsing assistant. DO NOT USE BULLET LISTS! Just 3 consecutive sentences.',
             '---',
             f'Today\'s headlines: {todays_headlines}',
             '---',
