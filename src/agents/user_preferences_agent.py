@@ -14,23 +14,24 @@ from src.reddit_scraper import RedditScraper
 
 MODEL_BINDER = known_models.BIND_ANTHROPIC_claude_35_sonnet()
 
-def _check_if_user_message(message: Message) -> bool:
-    return message['role'] == 'human'
-
-def _filter_history(history: list[Message]) -> list[Message]:
+def _filter_history(history: list[Message]) -> list[str]:
     return [
-        message for message in history
-        if not _check_if_user_message(message)
+        message['text'] for message in history
+        if message['role'] == 'human'
     ]
 
-def noop_tool() -> str:
-    """
-    This tool does nothing.
-    """
-    return "noop"
+class MessageTool:
+    def __init__(self, messages: list[str]):
+        self.messages = messages
 
-async def user_preferences_agent(user_preferences: str, history: list[Message]) -> list[Message]:
-    my_agent = build_simple_agent(name = 'agent', tools = [noop_tool])
+    def __call__(self) -> list[str]:
+        """
+        Returns the messages I sent in the conversation, which contain my preferences.
+        """
+        return _filter_history(self.messages)
+
+async def user_preferences_agent(user_preferences: str, user_history: list[Message]) -> list[Message]:
+    my_agent = build_simple_agent(name = 'agent', tools = [MessageTool(user_history)])
     my_bound_agent = MODEL_BINDER(my_agent)
     messages = [
         {
@@ -40,8 +41,6 @@ async def user_preferences_agent(user_preferences: str, history: list[Message]) 
                 'In 4 sentences, summarize their interests and news preferences.',
                 '---',
                 f'Here are their old preferences: {user_preferences}',
-                '---',
-                f'Conversation history: {history}',
             ]),
         },
         {
@@ -49,14 +48,15 @@ async def user_preferences_agent(user_preferences: str, history: list[Message]) 
             'text': 'What are my preferences?',
         },
     ]
-    history = flat_messages(
+    new_history = flat_messages(
         agent_name = '',
         messages = messages,
     )
-    result = await my_bound_agent(noop_callback, [history])
+    result = await my_bound_agent(noop_callback, [new_history])
     assert result['type'] == 'messages'
     return result['messages']
 
 __all__ = [
     'user_preferences_agent',
 ]
+

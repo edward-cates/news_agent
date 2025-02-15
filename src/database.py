@@ -16,4 +16,4 @@ class Database:
 
     def write_user_preferences(self, phone_number: str, preferences: str):
         self.db[phone_number] = preferences
-        self.db_file_path.write_text(json.dumps(self.db))
+        self.db_file_path.write_text(json.dumps(self.db, indent=2))

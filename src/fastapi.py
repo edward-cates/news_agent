@@ -96,3 +96,5 @@ async def stream(websocket: WebSocket):
                     await _send_text_to_caller(response)
     except WebSocketDisconnect:
         print("Websocket closed.")
+        if agent is not None:
+            await agent.end_call()

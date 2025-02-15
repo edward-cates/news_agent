@@ -32,10 +32,11 @@ class Agent:
 
     async def end_call(self) -> None:
         print("Ending call...")
-        user_preferences = await user_preferences_agent(
+        response: list[Message] = await user_preferences_agent(
             user_preferences=self.user_preferences,
-            history=self.conversation_history,
-        )[-1]['text']
+            user_history=self.conversation_history,
+        )
+        user_preferences = response[-1]['text']
         Database().write_user_preferences(self.phone_number, user_preferences)
         print(f"Updated user preferences: {self.phone_number=} {user_preferences=}")
 

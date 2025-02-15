@@ -1,5 +1,5 @@
 lasagna-ai==0.11.1
-twilio-phone-calls==1.3
+twilio-phone-calls==2.0
 beautifulsoup4==4.13.3
 tqdm
 pydantic
