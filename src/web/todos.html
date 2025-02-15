@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 120px);
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            padding: 16px;
+            background: #f5f5f5;
+            border-radius: 12px;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .user-message {
+            background: #007AFF;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .assistant-message {
+            background: white;
+            border: 1px solid #ddd;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="messages" id="messages"></div>
+        <div class="input-container">
+            <input type="text" id="messageInput" placeholder="Type your message...">
+            <button onclick="sendMessage()" id="sendButton">Send</button>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        const messages = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+
+        function connect() {
+            ws = new WebSocket('wss://3bc8-2605-a601-a314-f100-53fb-902-8792-1fc2.ngrok-free.app/todos');
+
+            ws.onopen = () => {
+                console.log('Connected to websocket');
+                sendButton.disabled = false;
+            };
+
+            ws.onmessage = (event) => {
+                addMessage(event.data, 'assistant');
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected from websocket');
+                sendButton.disabled = true;
+                setTimeout(connect, 1000);
+            };
+        }
+
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', `${sender}-message`);
+            messageDiv.textContent = text;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message && ws.readyState === WebSocket.OPEN) {
+                ws.send(message);
+                addMessage(message, 'user');
+                messageInput.value = '';
+            }
+        }
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        connect();
+    </script>
+</body>
+</html>

@@ -2,9 +2,10 @@ import json
 import sys
 import os
 from datetime import datetime
+from pathlib import Path
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import Response
+from fastapi.responses import Response, HTMLResponse, FileResponse
 
 from twilio_phone_calls import (
     create_twilio_voice_response,
@@ -13,6 +14,7 @@ from twilio_phone_calls import (
 from twilio_phone_calls.twilio_pydantic import StreamEventsEnum
 
 from src.agent import Agent
+from src.agents.todos.todo_agent import TodoAgent
 
 app = FastAPI()
 
@@ -46,6 +48,25 @@ async def phone_call(request: Request):
         media_type="application/xml",
     )
     return response
+
+@app.get("/todos/1803ny498h03m948xnhcg89h3m0efix90inef9mj2-efi9m092jefz", response_class=HTMLResponse)
+async def todos_page():
+    return FileResponse("src/web/todos.html")
+
+@app.websocket("/todos")
+async def todos(websocket: WebSocket):
+    try:
+        await websocket.accept()
+        todo_agent = TodoAgent()
+        while True:
+            message = await websocket.receive_text()
+            now_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            message = f"(User websocket message - reply with HTML; Sent at {now_pretty}) {message}"
+            response: str = await todo_agent.handle_human_message(message)
+            await websocket.send_text(response)
+    except WebSocketDisconnect:
+        print("Websocket closed.")
+
 
 @app.websocket("/stream")
 async def stream(websocket: WebSocket):
