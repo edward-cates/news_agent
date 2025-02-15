@@ -14,6 +14,8 @@ from lasagna import (
 
 from src.agents.todos.creator import create_todo_creator_agent
 from src.agents.todos.summarizer import create_summarizer_agent
+from src.agents.todos.updater import create_todo_updater_agent
+from src.agents.todos.completer import create_todo_completer_agent
 
 class TodoAgent:
     def __init__(self):
@@ -25,12 +27,15 @@ class TodoAgent:
             'role': 'human',
             'text': f"(Sent at {current_date_and_time_pretty}) {message}",
         })
+        print("debug", self.messages)
         agent = known_models.BIND_ANTHROPIC_claude_35_sonnet()(
             build_simple_agent(
                 name = 'todo_agent',
                 tools = [
                     create_todo_creator_agent(),
                     create_summarizer_agent(),
+                    create_todo_updater_agent(),
+                    create_todo_completer_agent(),
                 ],
             )
         )

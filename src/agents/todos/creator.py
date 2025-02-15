@@ -31,7 +31,8 @@ def create_todo_creator_agent():
                 strip_tool_messages = False,
                 system_prompt_override="""
                     Your job is to create atomic documents for every todo item.
-                    Ask 2 clarifying questions, then write a new document.
+                    If you need clarifying information to be able to track this task for me,
+                    then ask - but not more than 2 questions per task.
                 """.strip(),
             ),
             doc = "Use this tool to create a new todo document."
