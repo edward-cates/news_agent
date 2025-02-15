@@ -17,6 +17,7 @@ from src.agents.todos.creator import create_todo_creator_agent
 from src.agents.todos.summarizer import create_summarizer_agent
 from src.agents.todos.updater import create_todo_updater_agent
 from src.agents.todos.completer import create_todo_completer_agent
+from src.agents.todos.observer import create_observer_agent
 
 class TodoAgent:
     def __init__(self):
@@ -36,6 +37,7 @@ class TodoAgent:
                     create_summarizer_agent(),
                     create_todo_updater_agent(),
                     create_todo_completer_agent(),
+                    create_observer_agent(),
                 ],
                 message_extractor = build_standard_message_extractor(
                     strip_tool_messages = False,
