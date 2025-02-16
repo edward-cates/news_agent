@@ -41,7 +41,7 @@ async def phone_call(request: Request):
     form_data = await request.form()
     voice_response = create_twilio_voice_response(
         caller_number=form_data.get("Caller"),
-        websocket_url="wss://3bc8-2605-a601-a314-f100-53fb-902-8792-1fc2.ngrok-free.app/stream",
+        websocket_url=f"wss://{os.getenv('NGROK_URL')}/stream",
     )
     response = Response(
         content=voice_response.to_xml(),
@@ -49,8 +49,10 @@ async def phone_call(request: Request):
     )
     return response
 
-@app.get("/todos/1803ny498h03m948xnhcg89h3m0efix90inef9mj2-efi9m092jefz", response_class=HTMLResponse)
-async def todos_page():
+@app.get("/todos/{todos_token}", response_class=HTMLResponse)
+async def todos_page(todos_token: str):
+    if todos_token != os.getenv("TODOS_TOKEN"):
+        return Response(status_code=401)
     return FileResponse("src/web/todos.html")
 
 @app.websocket("/todos")

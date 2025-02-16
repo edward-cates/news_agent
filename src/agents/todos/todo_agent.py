@@ -13,12 +13,11 @@ from lasagna import (
     build_standard_message_extractor,
 )
 
-from src.agents.todos.creator import create_todo_creator_agent
-from src.agents.todos.summarizer import create_summarizer_agent
-from src.agents.todos.updater import create_todo_updater_agent
-from src.agents.todos.completer import create_todo_completer_agent
-from src.agents.todos.observer import create_observer_agent
-from src.agents.todos.planner import create_planner_agent
+from src.agents.todos.creator import create_todo_document
+from src.agents.todos.summarizer import read_todos
+from src.agents.todos.updater import overwrite_todo_document, append_to_todo_document
+from src.agents.todos.archiver import archive_todo_document
+from src.agents.todos.observer import overwrite_observer_notes, read_observer_notes
 
 class TodoAgent:
     def __init__(self):
@@ -34,12 +33,13 @@ class TodoAgent:
             build_simple_agent(
                 name = 'todo_agent',
                 tools = [
-                    create_todo_creator_agent(),
-                    create_summarizer_agent(),
-                    create_todo_updater_agent(),
-                    create_todo_completer_agent(),
-                    create_observer_agent(),
-                    create_planner_agent(),
+                    create_todo_document,
+                    read_todos,
+                    overwrite_todo_document,
+                    append_to_todo_document,
+                    archive_todo_document,
+                    overwrite_observer_notes,
+                    read_observer_notes,
                 ],
                 message_extractor = build_standard_message_extractor(
                     strip_tool_messages = False,
@@ -49,10 +49,14 @@ class TodoAgent:
         )
         agent_prompt = {
             'role': 'system',
-            'text': """
+            'text': f"""
                 You are my personal assistant. You keep my head attached.
                 I focus hard on the current moment and forget what I'm supposed to do.
                 You are attentive to detail and prevent things from falling through the cracks.
+
+                When completing daily tasks, append a timestamped line rather than archiving.
+
+                Always start by getting todos summary and observer notes.
             """.strip(),
         }
         response = await agent(noop_callback, [

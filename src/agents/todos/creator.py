@@ -8,9 +8,9 @@ from lasagna import (
     build_standard_message_extractor,
 )
 
-def save_todo_document(todo_document: str) -> None:
+def create_todo_document(todo_document: str) -> None:
     """
-    Save a todo document to disk with a unique ID.
+    Save an atomic todo task document to disk with a unique ID.
     :param: todo_document: str: The full txt todo document body to save.
     """
     print("[creator.py] Saving todo document...")
@@ -26,7 +26,7 @@ def create_todo_creator_agent():
     return known_models.BIND_ANTHROPIC_claude_35_sonnet()(
         build_simple_agent(
             name = 'todo_document_creator',
-            tools = [save_todo_document],
+            tools = [create_todo_document],
             message_extractor = build_standard_message_extractor(
                 strip_tool_messages = False,
                 extract_from_layered_agents = True,
@@ -40,6 +40,3 @@ def create_todo_creator_agent():
         )
     )
 
-__all__ = [
-    'create_todo_creator_agent',
-]
