@@ -1,4 +1,3 @@
-import traceback
 import asyncio
 import os
 import json
@@ -50,13 +49,12 @@ class TodoAgent:
         agent_prompt = {
             'role': 'system',
             'text': f"""
-                You are my personal assistant. You keep my head attached.
-                I focus hard on the current moment and forget what I'm supposed to do.
-                You are attentive to detail and prevent things from falling through the cracks.
+                You are my personal assistant. You help me balance a reasonable workload
+                with remembering what I'm supposed to do.
 
-                When completing daily tasks, append a timestamped line rather than archiving.
+                Be minimally concise - I'm trying to conserve my LLM token budget. And use emojis.
 
-                Always start by getting todos summary and observer notes.
+                Start by getting todos summary and observer notes.
             """.strip(),
         }
         response = await agent(noop_callback, [
@@ -68,28 +66,3 @@ class TodoAgent:
         assert response['type'] == 'messages'
         self.messages.extend(response['messages'])
         return response['messages'][-1]['text']
-
-
-async def main():
-    with open('local/.env.json', 'r') as f:
-        env_vars = json.load(f)
-        for key, value in env_vars.items():
-            print(f"Writing {key=}")
-            os.environ[key] = value
-
-    agent = TodoAgent()
-    while True:
-        try:
-            current_date_and_time_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            message = input(f"Enter a message (Sent at {current_date_and_time_pretty}): ")
-            response = await agent.handle_human_message(message)
-            print(response)
-        except KeyboardInterrupt:
-            break
-        except Exception as e:
-            traceback.print_exc()
-            print("An error occurred. Please try again.")
-
-
-if __name__ == '__main__':
-    asyncio.run(main())

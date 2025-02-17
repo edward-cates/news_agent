@@ -1,1 +1,1 @@
-python -m src.agents.todos.todo_agent
+python -m src.agents.todos.main

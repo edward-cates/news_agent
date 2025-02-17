@@ -11,6 +11,7 @@ from lasagna import (
 def create_todo_document(todo_document: str) -> None:
     """
     Save an atomic todo task document to disk with a unique ID.
+    Be minimally concise - I'm trying to conserve my LLM token budget.
     :param: todo_document: str: The full txt todo document body to save.
     """
     print("[creator.py] Saving todo document...")

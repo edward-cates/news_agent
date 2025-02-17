@@ -1,4 +1,4 @@
-import uuid
+import shutil
 from pathlib import Path
 from datetime import datetime
 
@@ -16,7 +16,8 @@ def archive_todo_document(doc_id: str) -> None:
     print(f"[archiver.py] Archiving todo document {doc_id=}...")
     doc_path = Path("local/archives/todos") / f"{doc_id}.txt"
     assert doc_path.exists()
-    doc_path.unlink()
+    # move it to "local/archives/todos/archives"
+    shutil.move(doc_path, Path("local/archives/todos/archives") / doc_path.name)
     print(f"[archiver.py] Archived todo document: {doc_id}")
 
 def create_todo_archiver_agent():
