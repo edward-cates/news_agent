@@ -15,8 +15,8 @@ def overwrite_todo_document(doc_id: str, todo_document: str) -> None:
     :param: todo_document: str: The full txt todo document body to save.
     """
     print(f"[updater.py] Overwriting todo document {doc_id=}...")
-    date_and_time_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    full_doc = f"id: {doc_id}\n\nRewritten at: {date_and_time_pretty}\n\n{todo_document}"
+    current_date_and_time_pretty = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
+    full_doc = f"id: {doc_id}\n\nRewritten at: {current_date_and_time_pretty}\n\n{todo_document}"
     doc_path = Path("local/archives/todos") / f"{doc_id}.txt"
     assert doc_path.exists()
     with open(doc_path, "w") as f:
@@ -30,8 +30,8 @@ def append_to_todo_document(doc_id: str, todo_document: str) -> None:
     :param: todo_document: str: The text to append to the todo document.
     """
     print(f"[updater.py] Appending to todo document {doc_id=}...")
-    date_and_time_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    full_doc = f"\n\nAppended at: {date_and_time_pretty}\n\n{todo_document}"
+    current_date_and_time_pretty = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
+    full_doc = f"\n\nAppended at: {current_date_and_time_pretty}\n\n{todo_document}"
     doc_path = Path("local/archives/todos") / f"{doc_id}.txt"
     assert doc_path.exists()
     with open(doc_path, "a") as f:

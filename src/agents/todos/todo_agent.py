@@ -23,7 +23,7 @@ class TodoAgent:
         self.messages: list[Message] = []
 
     async def handle_human_message(self, message: str) -> str:
-        current_date_and_time_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_date_and_time_pretty = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
         self.messages.append({
             'role': 'human',
             'text': f"(Sent at {current_date_and_time_pretty}) {message}",
@@ -55,6 +55,9 @@ class TodoAgent:
                 Be minimally concise - I'm trying to conserve my LLM token budget. And use emojis.
 
                 Start by getting todos summary and observer notes.
+
+                When writing tasks, I don't need you to fill in the blanks and/or steps.
+                Format the info I give you but don't make stuff up or guess.
             """.strip(),
         }
         response = await agent(noop_callback, [

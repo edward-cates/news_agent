@@ -16,8 +16,8 @@ def create_todo_document(todo_document: str) -> None:
     """
     print("[creator.py] Saving todo document...")
     doc_id = uuid.uuid4().hex
-    date_and_time_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    full_doc = f"id: {doc_id}\n\nCreated at: {date_and_time_pretty}\n\n{todo_document}"
+    current_date_and_time_pretty = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
+    full_doc = f"id: {doc_id}\n\nCreated at: {current_date_and_time_pretty}\n\n{todo_document}"
     Path("local/archives/todos").mkdir(parents=True, exist_ok=True)
     with open(Path("local/archives/todos") / f"{doc_id}.txt", "w") as f:
         f.write(full_doc)
