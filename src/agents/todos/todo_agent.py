@@ -2,6 +2,7 @@ import asyncio
 import os
 import json
 from datetime import datetime
+from typing import Callable
 
 from lasagna import (
     Message,
@@ -22,7 +23,7 @@ class TodoAgent:
     def __init__(self):
         self.messages: list[Message] = []
 
-    async def handle_human_message(self, message: str) -> str:
+    async def handle_human_message(self, message: str, callback: Callable[[str], None]) -> str:
         current_date_and_time_pretty = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
         self.messages.append({
             'role': 'human',
@@ -56,11 +57,16 @@ class TodoAgent:
 
                 Start by getting todos summary and observer notes.
 
-                When writing tasks, I don't need you to fill in the blanks and/or steps.
-                Format the info I give you but don't make stuff up or guess.
+                DO NOT create action items or steps.
             """.strip(),
         }
-        response = await agent(noop_callback, [
+
+        async def payload_callback(event: dict):
+            # https://github.com/Rhobota/lasagna-ai/blob/851c7f489d84596ec509dc48c3e21429da39714e/src/lasagna/tui.py#L24-L26
+            if event[0] == 'ai' and event[1] == 'text_event':
+                callback(event[2].rstrip())
+
+        response = await agent(payload_callback, [
             flat_messages(
                 agent_name = 'todo_agent',
                 messages = [agent_prompt, *self.messages],

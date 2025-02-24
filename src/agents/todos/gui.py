@@ -38,9 +38,14 @@ class TodoApp(App):
         chat_log = self.query_one("#chat-log")
         
         user_message = message.value
+
         chat_log.update(f"{chat_log.renderable}\nYou: {user_message}")
         input_widget.value = ""
 
-        response = await self.agent.handle_human_message(user_message)
-        chat_log.update(f"{chat_log.renderable}\nAssistant: {response}")
+        chat_log.update(f"{chat_log.renderable}\nAssistant: ")
+        def print_next_token(token: str):
+            chat_log.update(f"{chat_log.renderable}{token}")
+
+        response = await self.agent.handle_human_message(user_message, print_next_token)
+        # chat_log.update(f"{chat_log.renderable}\nAssistant: {response}")
 
