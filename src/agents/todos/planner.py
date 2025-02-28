@@ -1,13 +1,14 @@
 from pathlib import Path
 
 from lasagna import (
-    known_models,
     build_simple_agent,
     build_standard_message_extractor,
 )
 
+from .my_model_binder import my_model_binder
+
 def create_planner_agent():
-    return known_models.BIND_ANTHROPIC_claude_35_sonnet()(
+    return my_model_binder()(
         build_simple_agent(
             name = 'planner',
             tools = [],

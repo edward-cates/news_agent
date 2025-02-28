@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo List</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -16,7 +17,8 @@
         .chat-container {
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 120px);
+            min-height: 200px; /* Initial height */
+            max-height: calc(100vh - 32px);
         }
 
         .messages {
@@ -26,6 +28,7 @@
             padding: 16px;
             background: #f5f5f5;
             border-radius: 12px;
+            min-height: 150px; /* Initial height for messages */
         }
 
         .message {
@@ -73,66 +76,217 @@
         button:disabled {
             background: #ccc;
         }
+
+        /* Add new styles */
+        .cards-container {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .archive-button {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .archive-button:hover {
+            transform: scale(1.1);
+        }
+
+        .archive-button svg {
+            width: 14px;
+            height: 14px;
+        }
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="messages" id="messages"></div>
-        <div class="input-container">
-            <input type="text" id="messageInput" placeholder="Type your message...">
-            <button onclick="sendMessage()" id="sendButton">Send</button>
+    <div id="app">
+        <div class="chat-container">
+            <div class="messages" ref="messages">
+                <div v-for="message in messages" 
+                     :key="message.id"
+                     class="message"
+                     :class="message.sender + '-message'"
+                     v-html="message.text">
+                </div>
+            </div>
+            <div class="input-container">
+                <input type="text" 
+                       v-model="newMessage" 
+                       @keyup.enter="sendMessage"
+                       placeholder="Type your message...">
+                <button @click="sendMessage" 
+                        :disabled="!isConnected">
+                    Send
+                </button>
+                <button @click="exportMessage" 
+                        :disabled="messages.length === 0">
+                    Export
+                </button>
+            </div>
+        </div>
+        <div class="cards-container">
+            <div v-for="(card, index) in cards" 
+                 :key="index" 
+                 class="card">
+                <button class="archive-button"
+                        @click="appendCardText(card)"
+                        title="Archive">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/>
+                    </svg>
+                </button>
+                <div v-html="card"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        let ws;
-        const messages = document.getElementById('messages');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
+        const { createApp } = Vue
 
-        function connect() {
-            ws = new WebSocket('wss://3bc8-2605-a601-a314-f100-53fb-902-8792-1fc2.ngrok-free.app/todos');
+        createApp({
+            data() {
+                return {
+                    ws: null,
+                    messages: [],
+                    newMessage: '',
+                    isConnected: false,
+                    expectingNewMessage: false,
+                    cards: []
+                }
+            },
+            methods: {
+                connect() {
+                    this.ws = new WebSocket('wss://3bc8-2605-a601-a314-f100-53fb-902-8792-1fc2.ngrok-free.app/todos');
 
-            ws.onopen = () => {
-                console.log('Connected to websocket');
-                sendButton.disabled = false;
-            };
+                    this.ws.onopen = () => {
+                        console.log('Connected to websocket');
+                        this.isConnected = true;
+                    };
 
-            ws.onmessage = (event) => {
-                addMessage(event.data, 'assistant');
-            };
+                    this.ws.onmessage = (event) => {
+                        if (this.expectingNewMessage) {
+                            this.addMessage(event.data, 'assistant');
+                            this.expectingNewMessage = false;
+                        } else {
+                            // Append to last assistant message
+                            this.messages[this.messages.length - 1].text += event.data;
+                        }
+                        this.$nextTick(() => {
+                            const messagesDiv = this.$refs.messages;
+                            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        });
+                    };
 
-            ws.onclose = () => {
-                console.log('Disconnected from websocket');
-                sendButton.disabled = true;
-                setTimeout(connect, 1000);
-            };
-        }
+                    this.ws.onclose = () => {
+                        console.log('Disconnected from websocket');
+                        this.isConnected = false;
+                        setTimeout(() => this.connect(), 1000);
+                    };
+                },
+                addMessage(text, sender) {
+                    this.messages.push({
+                        id: Date.now(),
+                        text,
+                        sender
+                    });
+                    this.$nextTick(() => {
+                        const messagesDiv = this.$refs.messages;
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    });
+                },
+                sendMessage() {
+                    const message = this.newMessage.trim();
+                    if (message && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(message);
+                        this.addMessage(message, 'user');
+                        this.expectingNewMessage = true;
+                        this.newMessage = '';
+                    }
+                },
+                exportMessage() {
+                    // Create a temporary div with just the last message
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.padding = '20px';
+                    tempDiv.style.background = 'white';
+                    
+                    const lastMessage = this.messages[this.messages.length - 1];
+                    const messageDiv = document.createElement('div');
+                    messageDiv.innerHTML = lastMessage.text;
+                    messageDiv.style.marginBottom = '10px';
+                    messageDiv.style.padding = '8px';
+                    messageDiv.style.border = '1px solid #ddd';
+                    messageDiv.style.borderRadius = '8px';
+                    tempDiv.appendChild(messageDiv);
 
-        function addMessage(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', `${sender}-message`);
-            messageDiv.innerHTML = text;
-            messages.appendChild(messageDiv);
-            messages.scrollTop = messages.scrollHeight;
-        }
+                    document.body.appendChild(tempDiv);
 
-        function sendMessage() {
-            const message = messageInput.value.trim();
-            if (message && ws.readyState === WebSocket.OPEN) {
-                ws.send(message);
-                addMessage(message, 'user');
-                messageInput.value = '';
+                    // Use html2canvas to convert to image
+                    html2canvas(tempDiv).then(canvas => {
+                        // Create download link
+                        const link = document.createElement('a');
+                        link.download = 'message.png';
+                        link.href = canvas.toDataURL();
+                        link.click();
+                        document.body.removeChild(tempDiv);
+                    });
+                },
+                fetchCards() {
+                    const token = window.location.pathname.split('/').pop();
+                    fetch(`/todos/${token}`, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.cards = data;
+                    })
+                    .catch(error => console.error('Error fetching cards:', error));
+                },
+                appendCardText(card) {
+                    const cardText = card.slice(0, 10);
+                    if (this.newMessage.trim() === '') {
+                        this.newMessage = `archive the task ids that start with: ${cardText.substring(4, 10)}... ; `;
+                    } else {
+                        this.newMessage += `${cardText.substring(4, 10)}... ; `;
+                    }
+                }
+            },
+            mounted() {
+                this.connect();
+                this.fetchCards();
+                // Refresh cards every 30 seconds
+                // setInterval(this.fetchCards, 30000);
             }
-        }
-
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        connect();
+        }).mount('#app')
     </script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </body>
 </html>

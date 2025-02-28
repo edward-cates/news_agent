@@ -36,6 +36,7 @@ class TodoApp(App):
     async def on_input_submitted(self, message: Input.Submitted):
         input_widget = self.query_one("#message-input")
         chat_log = self.query_one("#chat-log")
+        container = self.query_one("#chat-container")
         
         user_message = message.value
 
@@ -45,7 +46,8 @@ class TodoApp(App):
         chat_log.update(f"{chat_log.renderable}\nAssistant: ")
         def print_next_token(token: str):
             chat_log.update(f"{chat_log.renderable}{token}")
+            container.scroll_end(animate=False)
 
         response = await self.agent.handle_human_message(user_message, print_next_token)
-        # chat_log.update(f"{chat_log.renderable}\nAssistant: {response}")
+        container.scroll_end(animate=False)
 

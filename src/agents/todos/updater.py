@@ -5,8 +5,14 @@ from datetime import datetime
 from lasagna import (
     known_models,
     build_simple_agent,
-    build_standard_message_extractor,
+    flat_messages,
+    noop_callback,
 )
+
+from .my_model_binder import my_model_binder
+
+from .summarizer import read_todos
+from .archiver import archive_todo_document
 
 def overwrite_todo_document(doc_id: str, todo_document: str) -> None:
     """
@@ -38,27 +44,51 @@ def append_to_todo_document(doc_id: str, todo_document: str) -> None:
         f.write(full_doc)
     print(f"[updater.py] Appended to todo document: {doc_id}")
 
-def create_todo_updater_agent():
-    return known_models.BIND_ANTHROPIC_claude_35_sonnet()(
+async def call_todo_document_updater_agent(instructions: str) -> str:
+    """
+    Give the todo document updater agent instructions for any type of
+    modification to an existing todo document.
+
+    :param: instructions: str: Brief instructions for the todo document.
+    """
+    print(f"[updater.py] Calling todo document updater agent with instructions: {instructions}")
+    agent = my_model_binder()(
         build_simple_agent(
             name = 'todo_document_updater',
             tools = [
                 overwrite_todo_document,
                 append_to_todo_document,
+                archive_todo_document,
             ],
-            message_extractor = build_standard_message_extractor(
-                strip_tool_messages = False,
-                extract_from_layered_agents = True,
-                system_prompt_override="""
-                    Sometimes we don't get todo documents perfect on the first try.
-                    Your job is to help me fix them, whether that means overwriting a bad doc
-                    wholesale or asking up to 2 clarifying questions to append.
-                """.strip(),
-            ),
-            doc = "Use this tool to update (overwrite or append) an existing todo document."
+            force_tool = True,
+            max_tool_iters = 1,
         )
     )
+    messages = [
+        {
+            'role': 'system',
+            'text': f"""
+                Follow the instructions by reading all current todos
+                and then making the appropriate modification.
+
+                Current tasks:
+                {read_todos()}
+            """,
+        },
+        {
+            'role': 'human',
+            'text': instructions,
+        },
+    ]
+    response = await agent(noop_callback, [
+        flat_messages(
+            agent_name = 'todo_document_updater',
+            messages = messages,
+        ),
+    ])
+    assert response['type'] == 'messages'
+    return "done"
 
 __all__ = [
-    'create_todo_updater_agent',
+    'call_todo_document_updater_agent',
 ]

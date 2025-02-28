@@ -1,19 +1,20 @@
 import json
 import sys
 import os
+import glob
 from datetime import datetime
 from pathlib import Path
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import Response, HTMLResponse, FileResponse
+from fastapi.responses import Response, HTMLResponse, FileResponse, JSONResponse
 
-from twilio_phone_calls import (
-    create_twilio_voice_response,
-    TwilioPhoneCall,
-)
-from twilio_phone_calls.twilio_pydantic import StreamEventsEnum
+# from twilio_phone_calls import (
+#     create_twilio_voice_response,
+#     TwilioPhoneCall,
+# )
+# from twilio_phone_calls.twilio_pydantic import StreamEventsEnum
 
-from src.agent import Agent
+# from src.agent import Agent
 from src.agents.todos.todo_agent import TodoAgent
 
 app = FastAPI()
@@ -55,17 +56,28 @@ async def todos_page(todos_token: str):
         return Response(status_code=401)
     return FileResponse("src/web/todos.html")
 
+@app.post("/todos/{todos_token}", response_class=JSONResponse)
+async def todos_api(todos_token: str, request: Request):
+    if todos_token != os.getenv("TODOS_TOKEN"):
+        return Response(status_code=401)
+    files = glob.glob('local/archives/todos/*.txt')
+    contents = []
+    for file in files:
+        with open(file, 'r') as f:
+            contents.append(f.read())
+    return contents
+
 @app.websocket("/todos")
 async def todos(websocket: WebSocket):
     try:
         await websocket.accept()
-        todo_agent = TodoAgent()
         while True:
             message = await websocket.receive_text()
             now_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            message = f"(User websocket message - reply with HTML; Sent at {now_pretty}) {message}"
-            response: str = await todo_agent.handle_human_message(message)
-            await websocket.send_text(response)
+            todo_agent = TodoAgent()
+            message = f"(User websocket message; Sent at {now_pretty}): {message}"
+            response: str = await todo_agent.handle_human_message(message, callback=websocket.send_text)
+            # await websocket.send_text(response)
     except WebSocketDisconnect:
         print("Websocket closed.")
 
