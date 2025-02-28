@@ -93,6 +93,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             width: 100%;
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
             align-items: flex-start;
             position: relative;
@@ -125,6 +126,33 @@
             width: 14px;
             height: 14px;
         }
+
+        .card-header {
+            width: 100%;
+            box-sizing: border-box;
+            background: #f0f8ff;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+
+        .card-header .label {
+            font-weight: 500;
+            margin-right: 8px;
+            color: #666;
+        }
+
+        /* Add filter styles */
+        .filter-container {
+            margin-bottom: 16px;
+        }
+
+        .filter-container select {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -154,7 +182,17 @@
             </div>
         </div>
         <div class="cards-container">
-            <div v-for="(card, index) in cards" 
+            <div class="filter-container">
+                <select v-model="selectedProject">
+                    <option value="">All Projects ({{ cards.length }})</option>
+                    <option v-for="project in projectList" 
+                            :key="project" 
+                            :value="project">
+                        {{ project }} ({{ getProjectCount(project) }})
+                    </option>
+                </select>
+            </div>
+            <div v-for="(card, index) in filteredCards" 
                  :key="index" 
                  class="card">
                 <button class="archive-button"
@@ -164,7 +202,17 @@
                         <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/>
                     </svg>
                 </button>
-                <div v-html="card"></div>
+                <div class="card-header">
+                    <div>
+                        <span class="label">Project:</span>
+                        <span>{{ card.metadata.project_name }}</span>
+                    </div>
+                    <div>
+                        <span class="label">Why:</span>
+                        <span>{{ card.metadata.project_selection_reasoning }}</span>
+                    </div>
+                </div>
+                <div v-html="card.contents"></div>
             </div>
         </div>
     </div>
@@ -180,7 +228,19 @@
                     newMessage: '',
                     isConnected: false,
                     expectingNewMessage: false,
-                    cards: []
+                    cards: [],
+                    selectedProject: ''
+                }
+            },
+            computed: {
+                projectList() {
+                    return [...new Set(this.cards.map(card => card.metadata.project_name))];
+                },
+                filteredCards() {
+                    if (!this.selectedProject) return this.cards;
+                    return this.cards.filter(card => 
+                        card.metadata.project_name === this.selectedProject
+                    );
                 }
             },
             methods: {
@@ -271,12 +331,15 @@
                     .catch(error => console.error('Error fetching cards:', error));
                 },
                 appendCardText(card) {
-                    const cardText = card.slice(0, 10);
+                    const cardText = card.contents.slice(0, 10);
                     if (this.newMessage.trim() === '') {
-                        this.newMessage = `archive the task ids that start with: ${cardText.substring(4, 10)}... ; `;
+                        this.newMessage = `archive these task ids : ${card.doc_id}; `;
                     } else {
-                        this.newMessage += `${cardText.substring(4, 10)}... ; `;
+                        this.newMessage += `${card.doc_id}; `;
                     }
+                },
+                getProjectCount(project) {
+                    return this.cards.filter(card => card.metadata.project_name === project).length;
                 }
             },
             mounted() {

@@ -18,6 +18,9 @@ def archive_todo_document(doc_id: str) -> None:
     assert doc_path.exists()
     # move it to "local/archives/todos/archives"
     shutil.move(doc_path, Path("local/archives/todos/archives") / doc_path.name)
+    json_path = Path("local/archives/todos") / f"{doc_id}.json"
+    if json_path.exists():
+        shutil.move(json_path, Path("local/archives/todos/archives") / json_path.name)
     print(f"[archiver.py] Archived todo document: {doc_id}")
 
 def create_todo_archiver_agent():

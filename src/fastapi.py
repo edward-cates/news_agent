@@ -1,7 +1,6 @@
 import json
 import sys
 import os
-import glob
 from datetime import datetime
 from pathlib import Path
 
@@ -60,11 +59,17 @@ async def todos_page(todos_token: str):
 async def todos_api(todos_token: str, request: Request):
     if todos_token != os.getenv("TODOS_TOKEN"):
         return Response(status_code=401)
-    files = glob.glob('local/archives/todos/*.txt')
-    contents = []
-    for file in files:
-        with open(file, 'r') as f:
-            contents.append(f.read())
+    todos_dir = Path("local/archives/todos")
+    todo_document_paths: list[Path] = list(todos_dir.glob('*.txt'))
+    contents: list[dict] = []
+    for file in todo_document_paths:
+        doc_id: str = file.stem
+        metadata_path: Path = todos_dir / f"{doc_id}.json"
+        contents.append({
+            "doc_id": doc_id,
+            "metadata": json.loads(metadata_path.read_text()),
+            "contents": file.read_text(),
+        })
     return contents
 
 @app.websocket("/todos")
