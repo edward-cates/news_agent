@@ -14,7 +14,9 @@ from fastapi.responses import Response, HTMLResponse, FileResponse, JSONResponse
 # from twilio_phone_calls.twilio_pydantic import StreamEventsEnum
 
 # from src.agent import Agent
-from src.agents.todos.todo_agent import TodoAgent
+from src.agents.todos.creator import call_todo_document_creator_agent
+from src.agents.todos.daily_plan_creator import TaskPlannerAgent
+from src.agents.todos.updater import call_todo_document_updater_agent
 
 app = FastAPI()
 
@@ -72,6 +74,22 @@ async def todos_api(todos_token: str, request: Request):
         })
     return contents
 
+@app.post("/create_todo/{todos_token}", response_class=JSONResponse)
+async def create_todo(todos_token: str, request: Request):
+    if todos_token != os.getenv("TODOS_TOKEN"):
+        return Response(status_code=401)
+    data = await request.json()
+    response: str = await call_todo_document_creator_agent(data["message"])
+    return {"response": response}
+
+@app.post("/edit_todo/{todos_token}", response_class=JSONResponse)
+async def edit_todo(todos_token: str, request: Request):
+    if todos_token != os.getenv("TODOS_TOKEN"):
+        return Response(status_code=401)
+    data = await request.json()
+    response: str = await call_todo_document_updater_agent(data["message"])
+    return {"response": response}
+
 @app.websocket("/todos")
 async def todos(websocket: WebSocket):
     try:
@@ -79,9 +97,16 @@ async def todos(websocket: WebSocket):
         while True:
             message = await websocket.receive_text()
             now_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            todo_agent = TodoAgent()
             message = f"(User websocket message; Sent at {now_pretty}): {message}"
-            response: str = await todo_agent.handle_human_message(message, callback=websocket.send_text)
+
+            async def payload_callback(event: dict):
+                # https://github.com/Rhobota/lasagna-ai/blob/851c7f489d84596ec509dc48c3e21429da39714e/src/lasagna/tui.py#L24-L26
+                if event[0] == 'ai' and event[1] == 'text_event':
+                    await websocket.send_text(event[2])
+
+            agent = TaskPlannerAgent(payload_callback)
+            response: str = await agent(message)
+            print("Done processing request.")
             # await websocket.send_text(response)
     except WebSocketDisconnect:
         print("Websocket closed.")

@@ -70,7 +70,9 @@ async def call_todo_document_creator_agent(instructions: str) -> str:
         {
             'role': 'system',
             'text': f"""
-                Create an atomic todo document, which is a concise HTML card.
+                Create an atomic todo document and choose a project to assign it to.
+                Make it short.
+                Use HTML for formatting.
 
                 Projects to choose from:
                 {json.dumps(_read_projects_json())}
@@ -89,3 +91,4 @@ async def call_todo_document_creator_agent(instructions: str) -> str:
     ])
     assert response['type'] == 'messages'
     return "done"
+

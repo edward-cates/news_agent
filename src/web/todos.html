@@ -52,29 +52,62 @@
 
         .input-container {
             display: flex;
-            gap: 8px;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-direction: column;
         }
 
         input {
             flex: 1;
-            padding: 12px;
+            min-width: 200px;
+            padding: 16px;
             border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 18px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 2px 8px rgba(0,122,255,0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         button {
-            padding: 12px 24px;
+            padding: 14px 24px;
             background: #007AFF;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
+            font-weight: 500;
             cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        button:hover:not(:disabled) {
+            background: #0066dd;
+            transform: translateY(-1px);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
         }
 
         button:disabled {
             background: #ccc;
+            cursor: not-allowed;
+            transform: none;
         }
 
         /* Add new styles */
@@ -103,6 +136,7 @@
             position: absolute;
             top: -8px;
             left: -8px;
+            min-width: 24px;
             width: 24px;
             height: 24px;
             padding: 0;
@@ -116,6 +150,7 @@
             justify-content: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             transition: transform 0.2s;
+            flex: none;
         }
 
         .archive-button:hover {
@@ -171,14 +206,27 @@
                        v-model="newMessage" 
                        @keyup.enter="sendMessage"
                        placeholder="Type your message...">
-                <button @click="sendMessage" 
-                        :disabled="!isConnected">
-                    Send
-                </button>
-                <button @click="exportMessage" 
-                        :disabled="messages.length === 0">
-                    Export
-                </button>
+                <div class="button-group">
+                    <button @click="sendMessage" 
+                            :disabled="!isConnected">
+                        Send
+                    </button>
+                    <button @click="createTask"
+                            :disabled="!newMessage || isCreating">
+                        {{ isCreating ? 'Creating...' : 'Create Task' }}
+                    </button>
+                    <button @click="editTask"
+                            :disabled="!newMessage || isEditing">
+                        {{ isEditing ? 'Editing...' : 'Edit Task' }}
+                    </button>
+                    <button @click="exportMessage" 
+                            :disabled="messages.length === 0">
+                        Export
+                    </button>
+                    <button @click="fetchCards">
+                        Refresh
+                    </button>
+                </div>
             </div>
         </div>
         <div class="cards-container">
@@ -229,7 +277,9 @@
                     isConnected: false,
                     expectingNewMessage: false,
                     cards: [],
-                    selectedProject: ''
+                    selectedProject: '',
+                    isCreating: false,
+                    isEditing: false
                 }
             },
             computed: {
@@ -340,6 +390,62 @@
                 },
                 getProjectCount(project) {
                     return this.cards.filter(card => card.metadata.project_name === project).length;
+                },
+                createTask() {
+                    const message = this.newMessage.trim();
+                    if (message) {
+                        this.isCreating = true;
+                        const token = window.location.pathname.split('/').pop();
+                        fetch(`/create_todo/${token}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({message})
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error('Failed to create task');
+                            this.addMessage(message, 'user');
+                            this.addMessage('Task created successfully!', 'assistant');
+                            this.newMessage = '';
+                            this.fetchCards();
+                        })
+                        .catch(error => {
+                            this.addMessage(message, 'user');
+                            this.addMessage('Error creating task: ' + error.message, 'assistant');
+                        })
+                        .finally(() => {
+                            this.isCreating = false;
+                        });
+                    }
+                },
+                editTask() {
+                    const message = this.newMessage.trim();
+                    if (message) {
+                        this.isEditing = true;
+                        const token = window.location.pathname.split('/').pop();
+                        fetch(`/edit_todo/${token}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({message})
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error('Failed to edit task');
+                            this.addMessage(message, 'user');
+                            this.addMessage('Task edited successfully!', 'assistant');
+                            this.newMessage = '';
+                            this.fetchCards();
+                        })
+                        .catch(error => {
+                            this.addMessage(message, 'user');
+                            this.addMessage('Error editing task: ' + error.message, 'assistant');
+                        })
+                        .finally(() => {
+                            this.isEditing = false;
+                        });
+                    }
                 }
             },
             mounted() {

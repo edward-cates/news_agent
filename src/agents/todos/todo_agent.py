@@ -47,6 +47,7 @@ class TodoAgent:
                     TaskPlannerAgent(payload_callback),
                     call_todo_document_updater_agent,
                 ],
+                force_tool = True,
                 message_extractor = build_standard_message_extractor(
                     strip_tool_messages = False,
                     extract_from_layered_agents = False,

@@ -33,16 +33,10 @@ class TaskPlannerAgent:
             {
                 'role': 'system',
                 'text': f"""
-                    Create a plan for me today. Make it beautiful using HTML, which gets
-                    rendered directly inside a card on a web page.
-
-                    For each task, give:
-                    - <1 sentence description
-                    - the first 6 characters of the task's id
-                    - the task number in today's list.
-
-                    Show all remaining tasks (again, numbered) that don't need to get done today
-                    in a bottom subsection.
+                    Prioritize tasks based on the user's instructions.
+                    Always list all remaining tasks in a bottom subsection.
+                    Make it concise.
+                    Use HTML for formatting.
                 """,
             },
             {
