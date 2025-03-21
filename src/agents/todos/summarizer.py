@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 from lasagna import (
@@ -10,13 +11,17 @@ def read_todos() -> list[str]:
     """
     Read all todo txt documents and returns them as a list of strings.
     """
+    start_time = time.time()
     print("[summarizer.py] Reading todos...")
     todos_dir = Path("local/archives/todos")
     todos_files = todos_dir.glob("*.txt")
-    return [
+    todos = [
         todo_file.read_text()
         for todo_file in todos_files
     ]
+    end_time = time.time()
+    print(f"[summarizer.py] Read {len(todos)} todos in {end_time - start_time} seconds")
+    return todos
 
 def create_summarizer_agent():
     return known_models.BIND_ANTHROPIC_claude_35_sonnet()(

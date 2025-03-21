@@ -188,6 +188,29 @@
             border: 1px solid #ddd;
             font-size: 14px;
         }
+
+        /* Add todo-doc styles */
+        .todo-doc {
+            width: 100%;
+        }
+
+        .todo-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .todo-title {
+            font-size: 1.2em;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .todo-body {
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -252,15 +275,19 @@
                 </button>
                 <div class="card-header">
                     <div>
+                        <span class="label">Task:</span>
+                        <span><b>{{ card.metadata.task_name }}</b></span>
+                    </div>
+                    <div>
                         <span class="label">Project:</span>
                         <span>{{ card.metadata.project_name }}</span>
                     </div>
-                    <div>
+                    <!-- <div>
                         <span class="label">Why:</span>
                         <span>{{ card.metadata.project_selection_reasoning }}</span>
-                    </div>
+                    </div> -->
                 </div>
-                <div v-html="card.contents"></div>
+                <div v-html="card.contents" class="todo-doc"></div>
             </div>
         </div>
     </div>

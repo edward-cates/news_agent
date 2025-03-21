@@ -14,9 +14,7 @@ from fastapi.responses import Response, HTMLResponse, FileResponse, JSONResponse
 # from twilio_phone_calls.twilio_pydantic import StreamEventsEnum
 
 # from src.agent import Agent
-from src.agents.todos.creator import call_todo_document_creator_agent
-from src.agents.todos.daily_plan_creator import TaskPlannerAgent
-from src.agents.todos.updater import call_todo_document_updater_agent
+from src.agents.todos.todo_agent import TodoAgent
 
 app = FastAPI()
 
@@ -94,18 +92,17 @@ async def edit_todo(todos_token: str, request: Request):
 async def todos(websocket: WebSocket):
     try:
         await websocket.accept()
+
+        agent = TodoAgent(
+            callback = websocket.send_text,
+        )
+
         while True:
             message = await websocket.receive_text()
             now_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             message = f"(User websocket message; Sent at {now_pretty}): {message}"
 
-            async def payload_callback(event: dict):
-                # https://github.com/Rhobota/lasagna-ai/blob/851c7f489d84596ec509dc48c3e21429da39714e/src/lasagna/tui.py#L24-L26
-                if event[0] == 'ai' and event[1] == 'text_event':
-                    await websocket.send_text(event[2])
-
-            agent = TaskPlannerAgent(payload_callback)
-            response: str = await agent(message)
+            await agent.handle_human_message(message)
             print("Done processing request.")
             # await websocket.send_text(response)
     except WebSocketDisconnect:

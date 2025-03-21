@@ -1,12 +1,21 @@
+import traceback
 import uuid
 from pathlib import Path
 from datetime import datetime
+from typing import List
 
 from lasagna import (
+    Message,
     known_models,
     build_simple_agent,
     flat_messages,
     noop_callback,
+    recursive_extract_messages,
+    strip_tool_calls_and_results,
+    override_system_prompt,
+    Model,
+    EventCallback,
+    AgentRun,
 )
 
 from .my_model_binder import my_model_binder
@@ -44,51 +53,55 @@ def append_to_todo_document(doc_id: str, todo_document: str) -> None:
         f.write(full_doc)
     print(f"[updater.py] Appended to todo document: {doc_id}")
 
-async def call_todo_document_updater_agent(instructions: str) -> str:
+SYSTEM_PROMPT = """
+Follow the instructions by reading all current todos
+and then making the appropriate modification.
+""".strip()
+
+
+class EditorAgent:
     """
-    Give the todo document updater agent instructions for any type of
-    modification to an existing todo document.
-
-    :param: instructions: str: Brief instructions for the todo document.
+    Use this agent to edit an existing todo document
+    (but not archive).
     """
-    print(f"[updater.py] Calling todo document updater agent with instructions: {instructions}")
-    agent = my_model_binder()(
-        build_simple_agent(
-            name = 'todo_document_updater',
-            tools = [
-                overwrite_todo_document,
-                append_to_todo_document,
-                archive_todo_document,
-            ],
-            force_tool = True,
-            max_tool_iters = 1,
-        )
-    )
-    messages = [
-        {
-            'role': 'system',
-            'text': f"""
-                Follow the instructions by reading all current todos
-                and then making the appropriate modification.
 
-                Current tasks:
-                {read_todos()}
-            """,
-        },
-        {
-            'role': 'human',
-            'text': instructions,
-        },
-    ]
-    response = await agent(noop_callback, [
-        flat_messages(
-            agent_name = 'todo_document_updater',
-            messages = messages,
-        ),
-    ])
-    assert response['type'] == 'messages'
-    return "done"
+    def __init__(self):
+        pass
 
-__all__ = [
-    'call_todo_document_updater_agent',
-]
+    async def __call__(
+        self,
+        model: Model,
+        event_callback: EventCallback,
+        prev_runs: List[AgentRun],
+    ) -> AgentRun:
+        print("EDITOR AGENT")
+        try:
+            messages = recursive_extract_messages(
+                prev_runs,
+                from_layered_agents = False,
+            )
+            messages = strip_tool_calls_and_results(messages)
+            messages = override_system_prompt(
+                messages,
+                "\n".join([
+                    SYSTEM_PROMPT,
+                    "Here are the remaining tasks:",
+                    *read_todos(),
+                ]),
+            )
+            new_messages: List[Message] = await model.run(
+                event_callback = event_callback,
+                messages = messages,
+                tools = [
+                    overwrite_todo_document,
+                    append_to_todo_document,
+                ],
+            )
+            return flat_messages(
+                agent_name = 'editor_agent',
+                messages = new_messages,
+            )
+        except Exception as e:
+            traceback.print_exc()
+            raise e
+
