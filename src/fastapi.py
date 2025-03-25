@@ -88,7 +88,7 @@ async def edit_todo(todos_token: str, request: Request):
     response: str = await call_todo_document_updater_agent(data["message"])
     return {"response": response}
 
-@app.websocket("/todos")
+@app.websocket("/todos/awfnq89h0n3984hn1098je0n9xf18n0398fn98n093jmf9")
 async def todos(websocket: WebSocket):
     try:
         await websocket.accept()

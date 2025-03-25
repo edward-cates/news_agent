@@ -69,6 +69,7 @@ class TodoAgent:
             build_simple_agent(
                 name = 'todo_agent',
                 tools = [
+                    read_todos,
                     PlannerAgent(),
                     ArchiverAgent(),
                     CreatorAgent(),

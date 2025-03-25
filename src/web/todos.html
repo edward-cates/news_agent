@@ -234,14 +234,6 @@
                             :disabled="!isConnected">
                         Send
                     </button>
-                    <button @click="createTask"
-                            :disabled="!newMessage || isCreating">
-                        {{ isCreating ? 'Creating...' : 'Create Task' }}
-                    </button>
-                    <button @click="editTask"
-                            :disabled="!newMessage || isEditing">
-                        {{ isEditing ? 'Editing...' : 'Edit Task' }}
-                    </button>
                     <button @click="exportMessage" 
                             :disabled="messages.length === 0">
                         Export
@@ -322,7 +314,7 @@
             },
             methods: {
                 connect() {
-                    this.ws = new WebSocket('wss://3bc8-2605-a601-a314-f100-53fb-902-8792-1fc2.ngrok-free.app/todos');
+                    this.ws = new WebSocket('wss://fe467616d4ee.ngrok.app/todos/awfnq89h0n3984hn1098je0n9xf18n0398fn98n093jmf9');
 
                     this.ws.onopen = () => {
                         console.log('Connected to websocket');
