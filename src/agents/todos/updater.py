@@ -1,15 +1,12 @@
 import traceback
-import uuid
 from pathlib import Path
 from datetime import datetime
 from typing import List
+import json
 
 from lasagna import (
     Message,
-    known_models,
-    build_simple_agent,
     flat_messages,
-    noop_callback,
     recursive_extract_messages,
     strip_tool_calls_and_results,
     override_system_prompt,
@@ -18,46 +15,61 @@ from lasagna import (
     AgentRun,
 )
 
-from .my_model_binder import my_model_binder
-
 from .summarizer import read_todos
-from .archiver import archive_todo_document
 
-def overwrite_todo_document(doc_id: str, todo_document: str) -> None:
+def overwrite_todo_document(
+    doc_id: str,
+    task_name: str,
+    body_html: str,
+    estimated_priority: int,
+    appended_notes: str,
+) -> None:
     """
     Overwrite a todo document on disk.
+
     :param: doc_id: str: The ID of the todo document to update.
-    :param: todo_document: str: The full txt todo document body to save.
+    :param: task_name: str: The name of the task to save the todo document to.
+    :param: body_html: str: The html body of the todo document.
+    :param: estimated_priority: int: The estimated priority of the todo document (1-3).
+    :param: appended_notes: str: A JSON list of string notes to append to the todo document.
     """
     print(f"[updater.py] Overwriting todo document {doc_id=}...")
-    current_date_and_time_pretty = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
-    full_doc = f"id: {doc_id}\n\nRewritten at: {current_date_and_time_pretty}\n\n{todo_document}"
+
     doc_path = Path("local/archives/todos") / f"{doc_id}.txt"
     assert doc_path.exists()
+
+    metadata = json.load(open(doc_path.with_suffix(".json")))
+    project_name = metadata["project_name"]
+
+    current_date_and_time_pretty = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
+    appended_notes_html = '\n'.join([
+        f"<li class='todo-note'>{note}</li>" 
+        for note in json.loads(appended_notes)
+    ])
+    full_doc = f"""<div class="todo-doc">
+        <div class="todo-header">
+            <div class="todo-id">ID: {doc_id}</div>
+            <div class="todo-created">Created at: {current_date_and_time_pretty}</div>
+            <div class="todo-project">Project: {project_name}</div>
+            <div class="todo-priority">Priority: {estimated_priority}</div>
+        </div>
+        <div class="todo-title">{task_name}</div>
+        <div class="todo-body">{body_html}</div>
+        <div class="todo-footer">
+            <ul>
+                {appended_notes_html}
+            </ul>
+        </div>
+    </div>"""
     with open(doc_path, "w") as f:
         f.write(full_doc)
     print(f"[updater.py] Updated todo document: {doc_id}")
 
-def append_to_todo_document(doc_id: str, todo_document: str) -> None:
-    """
-    Append text to a todo document on disk.
-    :param: doc_id: str: The ID of the todo document to update.
-    :param: todo_document: str: The text to append to the todo document.
-    """
-    print(f"[updater.py] Appending to todo document {doc_id=}...")
-    current_date_and_time_pretty = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
-    full_doc = f"\n\nAppended at: {current_date_and_time_pretty}\n\n{todo_document}"
-    doc_path = Path("local/archives/todos") / f"{doc_id}.txt"
-    assert doc_path.exists()
-    with open(doc_path, "a") as f:
-        f.write(full_doc)
-    print(f"[updater.py] Appended to todo document: {doc_id}")
 
 SYSTEM_PROMPT = """
 Follow the instructions by reading all current todos
 and then making the appropriate modification.
 """.strip()
-
 
 class EditorAgent:
     """
@@ -94,7 +106,6 @@ class EditorAgent:
                 messages = messages,
                 tools = [
                     overwrite_todo_document,
-                    append_to_todo_document,
                 ],
             )
             return flat_messages(

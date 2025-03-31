@@ -33,6 +33,7 @@ def create_todo_document(
 ) -> None:
     """
     Save an atomic todo task document to disk with a unique ID.
+
     :param: task_name: str: The name of the task to save the todo document to.
     :param: body_html: str: The html body of the todo document.
     :param: project_name: str: The name of the project to save the todo document to.
@@ -51,6 +52,8 @@ def create_todo_document(
             <div class="todo-header">
                 <div class="todo-id">ID: {doc_id}</div>
                 <div class="todo-created">Created at: {current_date_and_time_pretty}</div>
+                <div class="todo-project">Project: {project_name}</div>
+                <div class="todo-priority">Priority: {estimated_priority}</div>
             </div>
             <div class="todo-title">{task_name}</div>
             <div class="todo-body">{body_html}</div>

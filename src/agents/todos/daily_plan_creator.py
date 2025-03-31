@@ -22,10 +22,11 @@ from .summarizer import read_todos
 
 SYSTEM_PROMPT = """
 Prioritize tasks based on the user's instructions.
-Always list all remaining tasks in a bottom subsection.
-Make it concise.
-Don't plan my breaks for me.
-Use HTML for formatting.
+Group them by project.
+List de-prioritized tasks in a bottom subsection.
+Make it concise - one line per task.
+Don't plan breaks or anything else non-task.
+Use HTML for formatting (your HTML is rendered inside a message bubble).
 """.strip()
 
 

@@ -26,7 +26,7 @@ Your job is to listen to the user's requests
 disseminate atomic instructions to task-specific agents.
 Atomic means every agent call works on a single todo document.
 
-BE ALMOST RUDELY CONCISE.
+The subagents will talk to the user, so you don't need to repeat what they say!
 """.strip()
 
 
@@ -81,3 +81,4 @@ class TodoAgent:
         response: AgentRun = await agent(self.payload_callback, self.runs)
 
         self.runs.append(response)
+

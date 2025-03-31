@@ -196,6 +196,7 @@
 
         .todo-header {
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
             margin-bottom: 12px;
             font-size: 0.9em;
@@ -210,6 +211,28 @@
 
         .todo-body {
             color: #333;
+        }
+
+        .todo-footer {
+            margin-top: 12px;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+        }
+
+        .todo-footer ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .todo-note {
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .todo-note:last-child {
+            margin-bottom: 0;
         }
     </style>
 </head>
