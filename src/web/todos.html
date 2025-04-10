@@ -12,17 +12,20 @@
             margin: 0;
             padding: 16px;
             max-width: 100%;
-            margin: 0 auto;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
 
         .chat-container {
             display: flex;
             flex-direction: column;
-            min-height: 200px; /* Initial height */
+            min-height: 200px;
             max-height: calc(100vh - 32px);
             width: 100%;
             max-width: 1400px;
             margin: 0 auto;
+            box-sizing: border-box;
+            padding: 0 16px;
         }
 
         .messages {
@@ -250,6 +253,9 @@
             border-radius: 12px;
             width: 100%;
             max-width: 1400px;
+            overflow-x: auto;
+            box-sizing: border-box;
+            padding: 0 16px;
         }
 
         .grid-row {
@@ -258,6 +264,7 @@
             gap: 16px;
             padding: 12px;
             border-bottom: 1px solid #eee;
+            min-width: 800px;
         }
 
         .grid-row:last-child {
@@ -537,6 +544,7 @@
                     };
 
                     this.ws.onmessage = (event) => {
+                        console.log(event.data)
                         if (event.data === "<refresh>") {
                             this.fetchCards();
                             return;
