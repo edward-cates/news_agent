@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo List</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 16px;
-            max-width: 600px;
+            max-width: 100%;
             margin: 0 auto;
         }
 
@@ -19,6 +20,9 @@
             flex-direction: column;
             min-height: 200px; /* Initial height */
             max-height: calc(100vh - 32px);
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
         .messages {
@@ -117,6 +121,9 @@
             flex-direction: column;
             gap: 16px;
             padding: 16px;
+            width: 100%;
+            max-width: 1400px;
+            margin: 20px auto;
         }
 
         .card {
@@ -234,6 +241,164 @@
         .todo-note:last-child {
             margin-bottom: 0;
         }
+
+        /* Grid styles */
+        .todos-grid {
+            margin: 20px auto;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .grid-row {
+            display: grid;
+            grid-template-columns: 200px repeat(3, 1fr);
+            gap: 16px;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .grid-row:last-child {
+            border-bottom: none;
+        }
+
+        .project-name {
+            font-weight: 500;
+            color: #333;
+            padding: 8px;
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .priority-column {
+            background: #fff;
+            border-radius: 6px;
+            padding: 8px;
+            min-height: 100px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .priority-1 { border-left: 4px solid #dc3545; }
+        .priority-2 { border-left: 4px solid #ffc107; }
+        .priority-3 { border-left: 4px solid #28a745; }
+
+        .priority-header {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .task-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task-item {
+            padding: 4px 0;
+            font-size: 0.9em;
+            color: #444;
+            position: relative;
+            padding-left: 16px;
+        }
+
+        .task-item::before {
+            content: "•";
+            position: absolute;
+            left: 4px;
+            color: #666;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-actions {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+            z-index: 1001;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            min-width: auto;
+            flex: none;
+        }
+
+        .modal-close:hover {
+            color: #333;
+            background: none;
+            transform: none;
+        }
+
+        .complete-button {
+            width: 100%;
+            padding: 16px;
+            margin-top: 24px;
+            background: #e8f5e9;
+            border: none;
+            border-radius: 8px;
+            color: #28a745;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .complete-button:hover {
+            background: #d4edda;
+            transform: translateY(-1px);
+        }
+
+        .complete-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .task-item {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .task-item:hover {
+            background-color: #f8f9fa;
+        }
     </style>
 </head>
 <body>
@@ -267,42 +432,68 @@
                 </div>
             </div>
         </div>
-        <div class="cards-container">
-            <div class="filter-container">
-                <select v-model="selectedProject">
-                    <option value="">All Projects ({{ cards.length }})</option>
-                    <option v-for="project in projectList" 
-                            :key="project" 
-                            :value="project">
-                        {{ project }} ({{ getProjectCount(project) }})
-                    </option>
-                </select>
-            </div>
-            <div v-for="(card, index) in filteredCards" 
-                 :key="index" 
-                 class="card">
-                <button class="archive-button"
-                        @click="appendCardText(card)"
-                        title="Archive">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/>
-                    </svg>
-                </button>
-                <div class="card-header">
-                    <div>
-                        <span class="label">Task:</span>
-                        <span><b>{{ card.metadata.task_name }}</b></span>
-                    </div>
-                    <div>
-                        <span class="label">Project:</span>
-                        <span>{{ card.metadata.project_name }}</span>
-                    </div>
-                    <!-- <div>
-                        <span class="label">Why:</span>
-                        <span>{{ card.metadata.project_selection_reasoning }}</span>
-                    </div> -->
+        <div class="todos-grid">
+            <div class="grid-row" v-for="project in projectList" :key="project">
+                <div class="project-name">{{ project }}</div>
+                <div class="priority-column priority-1">
+                    <div class="priority-header">Priority 1</div>
+                    <ul class="task-list">
+                        <li v-for="card in getPriorityCards(project, 1)" 
+                            :key="card.doc_id" 
+                            class="task-item"
+                            @click="showCardDetails(card)">
+                            {{ card.metadata.task_name }}
+                        </li>
+                    </ul>
                 </div>
-                <div v-html="card.contents" class="todo-doc"></div>
+                <div class="priority-column priority-2">
+                    <div class="priority-header">Priority 2</div>
+                    <ul class="task-list">
+                        <li v-for="card in getPriorityCards(project, 2)" 
+                            :key="card.doc_id" 
+                            class="task-item"
+                            @click="showCardDetails(card)">
+                            {{ card.metadata.task_name }}
+                        </li>
+                    </ul>
+                </div>
+                <div class="priority-column priority-3">
+                    <div class="priority-header">Priority 3</div>
+                    <ul class="task-list">
+                        <li v-for="card in getPriorityCards(project, 3)" 
+                            :key="card.doc_id" 
+                            class="task-item"
+                            @click="showCardDetails(card)">
+                            {{ card.metadata.task_name }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal-overlay" v-if="selectedCard" @click="selectedCard = null">
+            <div class="modal-content" @click.stop>
+                <button class="modal-close" @click="selectedCard = null">&times;</button>
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <span class="label">Task:</span>
+                            <span><b>{{ selectedCard.metadata.task_name }}</b></span>
+                        </div>
+                        <div>
+                            <span class="label">Project:</span>
+                            <span>{{ selectedCard.metadata.project_name }}</span>
+                        </div>
+                    </div>
+                    <div v-html="selectedCard.contents" class="todo-doc"></div>
+                </div>
+                <button class="complete-button" @click="archiveCard(selectedCard)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Complete Task
+                </button>
             </div>
         </div>
     </div>
@@ -321,7 +512,8 @@
                     cards: [],
                     selectedProject: '',
                     isCreating: false,
-                    isEditing: false
+                    isEditing: false,
+                    selectedCard: null
                 }
             },
             computed: {
@@ -337,7 +529,7 @@
             },
             methods: {
                 connect() {
-                    this.ws = new WebSocket('wss://fe467616d4ee.ngrok.app/todos/awfnq89h0n3984hn1098je0n9xf18n0398fn98n093jmf9');
+                    this.ws = new WebSocket('wss://todos.ngrok.io/todos/awfnq89h0n3984hn1098je0n9xf18n0398fn98n093jmf9');
 
                     this.ws.onopen = () => {
                         console.log('Connected to websocket');
@@ -488,6 +680,53 @@
                             this.isEditing = false;
                         });
                     }
+                },
+                showCardDetails(card) {
+                    this.selectedCard = card;
+                },
+                async archiveCard(card) {
+                    const result = await Swal.fire({
+                        title: 'Complete this task?',
+                        text: "Mark this task as completed",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#28a745',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, done!'
+                    });
+
+                    if (result.isConfirmed) {
+                        const token = window.location.pathname.split('/').pop();
+                        try {
+                            const response = await fetch(`/todos/archive/${card.doc_id}/${token}`, {
+                                method: 'POST'
+                            });
+                            
+                            if (response.ok) {
+                                await Swal.fire(
+                                    'Completed!',
+                                    'Great job! Task marked as completed.',
+                                    'success'
+                                );
+                                this.selectedCard = null;
+                                this.fetchCards();
+                            } else {
+                                throw new Error('Failed to complete task');
+                            }
+                        } catch (error) {
+                            await Swal.fire(
+                                'Error!',
+                                'Failed to complete the task.',
+                                'error'
+                            );
+                        }
+                    }
+                },
+                getPriorityCards(project, priority) {
+                    return this.cards.filter(card => 
+                        card.metadata.project_name === project && 
+                        card.metadata.estimated_priority === priority
+                    );
                 }
             },
             mounted() {
@@ -499,5 +738,6 @@
         }).mount('#app')
     </script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>

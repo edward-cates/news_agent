@@ -22,6 +22,7 @@ def overwrite_todo_document(
     task_name: str,
     body_html: str,
     estimated_priority: int,
+    time_sensitivity: int,
     appended_notes: str,
 ) -> None:
     """
@@ -31,7 +32,8 @@ def overwrite_todo_document(
     :param: task_name: str: The name of the task to save the todo document to.
     :param: body_html: str: The html body of the todo document.
     :param: estimated_priority: int: The estimated priority of the todo document (1-3).
-    :param: appended_notes: str: A JSON list of string notes to append to the todo document.
+    :param: time_sensitivity: int: The time sensitivity of the todo document, where 1 is within a day or two, 2 is within a week or month, and 3 is not time sensitive.
+    :param: appended_notes: str: A JSON-parsable list of string notes to append to the todo document.
     """
     print(f"[updater.py] Overwriting todo document {doc_id=}...")
 
@@ -41,17 +43,37 @@ def overwrite_todo_document(
     metadata = json.load(open(doc_path.with_suffix(".json")))
     project_name = metadata["project_name"]
 
+    try:
+        appended_notes = json.loads(appended_notes)
+    except Exception as e:
+        raise ValueError(f"Appended notes are not a valid JSON list: {appended_notes}")
+
     current_date_and_time_pretty = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
     appended_notes_html = '\n'.join([
         f"<li class='todo-note'>{note}</li>" 
-        for note in json.loads(appended_notes)
+        for note in appended_notes
     ])
+
+    metadata_path = Path("local/archives/todos") / f"{doc_id}.json"
+    current_metadata = json.load(open(metadata_path))
+
+    metadata = {
+        **current_metadata,
+        "task_name": task_name,
+        "estimated_priority": estimated_priority,
+        "time_sensitivity": time_sensitivity,
+    }
+    with open(metadata_path, "w") as f:
+        print("Writing metadata to: ", metadata_path)
+        json.dump(metadata, f)
+
     full_doc = f"""<div class="todo-doc">
         <div class="todo-header">
             <div class="todo-id">ID: {doc_id}</div>
             <div class="todo-created">Created at: {current_date_and_time_pretty}</div>
             <div class="todo-project">Project: {project_name}</div>
             <div class="todo-priority">Priority: {estimated_priority}</div>
+            <div class="todo-time-sensitivity">Time sensitivity: {time_sensitivity}</div>
         </div>
         <div class="todo-title">{task_name}</div>
         <div class="todo-body">{body_html}</div>

@@ -15,6 +15,7 @@ from fastapi.responses import Response, HTMLResponse, FileResponse, JSONResponse
 
 # from src.agent import Agent
 from src.agents.todos.todo_agent import TodoAgent
+from src.agents.todos.archiver import archive_todo_document
 
 app = FastAPI()
 
@@ -54,6 +55,13 @@ async def todos_page(todos_token: str):
     if todos_token != os.getenv("TODOS_TOKEN"):
         return Response(status_code=401)
     return FileResponse("src/web/todos.html")
+
+@app.post("/todos/archive/{task_id}/{todos_token}", response_class=JSONResponse)
+async def archive_todo(task_id: str, todos_token: str):
+    if todos_token != os.getenv("TODOS_TOKEN"):
+        return Response(status_code=401)
+    archive_todo_document(task_id)
+    return {"message": "Todo archived"}
 
 @app.post("/todos/{todos_token}", response_class=JSONResponse)
 async def todos_api(todos_token: str, request: Request):

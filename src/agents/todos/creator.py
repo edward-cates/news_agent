@@ -30,6 +30,7 @@ def create_todo_document(
     project_name: str,
     project_selection_reasoning: str,
     estimated_priority: int,
+    time_sensitivity: int,
 ) -> None:
     """
     Save an atomic todo task document to disk with a unique ID.
@@ -39,6 +40,7 @@ def create_todo_document(
     :param: project_name: str: The name of the project to save the todo document to.
     :param: project_selection_reasoning: str: The reasoning for selecting the project that was chosen.
     :param: estimated_priority: int: The estimated priority of the todo document, 1-3.
+    :param: time_sensitivity: int: The time sensitivity of the todo document, where 1 is within a day or two, 2 is within a week or month, and 3 is not time sensitive.
     """
     try:
         assert project_name in set(_read_projects_json().keys()), f"Project name {project_name} not found in projects.json"
@@ -54,6 +56,7 @@ def create_todo_document(
                 <div class="todo-created">Created at: {current_date_and_time_pretty}</div>
                 <div class="todo-project">Project: {project_name}</div>
                 <div class="todo-priority">Priority: {estimated_priority}</div>
+                <div class="todo-time-sensitivity">Time sensitivity: {time_sensitivity}</div>
             </div>
             <div class="todo-title">{task_name}</div>
             <div class="todo-body">{body_html}</div>
@@ -67,6 +70,7 @@ def create_todo_document(
             "project_name": project_name,
             "project_selection_reasoning": project_selection_reasoning,
             "estimated_priority": estimated_priority,
+            "time_sensitivity": time_sensitivity,
         }
         metadata_path = Path("local/archives/todos") / f"{doc_id}.json"
         with open(metadata_path, "w") as f:
