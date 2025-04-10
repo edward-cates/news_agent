@@ -537,6 +537,11 @@
                     };
 
                     this.ws.onmessage = (event) => {
+                        if (event.data === "<refresh>") {
+                            this.fetchCards();
+                            return;
+                        }
+                        
                         if (this.expectingNewMessage) {
                             this.addMessage(event.data, 'assistant');
                             this.expectingNewMessage = false;

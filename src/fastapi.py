@@ -112,7 +112,7 @@ async def todos(websocket: WebSocket):
 
             await agent.handle_human_message(message)
             print("Done processing request.")
-            # await websocket.send_text(response)
+            await websocket.send_text("<refresh>")
     except WebSocketDisconnect:
         print("Websocket closed.")
 
