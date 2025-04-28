@@ -6,6 +6,7 @@
     <title>Todo List</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vueuse/core@10.7.2/index.iife.min.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -300,23 +301,37 @@
 
         .task-list {
             list-style-type: none;
-            padding: 0;
+            padding: 8px;
             margin: 0;
+            min-height: 40px;
+            background: #f8f9fa;
+            border-radius: 6px;
         }
 
         .task-item {
-            padding: 4px 0;
-            font-size: 0.9em;
-            color: #444;
-            position: relative;
-            padding-left: 16px;
+            cursor: move;
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            user-select: none;
         }
 
-        .task-item::before {
-            content: "•";
-            position: absolute;
-            left: 4px;
-            color: #666;
+        .task-item:hover {
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .task-item.dragging {
+            opacity: 0.5;
+            background: #e9ecef;
+        }
+
+        .task-list.drag-over {
+            background: #e9ecef;
+            border: 2px dashed #007AFF;
         }
 
         /* Modal styles */
@@ -398,13 +413,16 @@
             height: 20px;
         }
 
-        .task-item {
-            cursor: pointer;
-            transition: background-color 0.2s;
+        /* Sortable.js styles */
+        .sortable-ghost {
+            opacity: 0.4;
+            background: #e9ecef;
         }
 
-        .task-item:hover {
-            background-color: #f8f9fa;
+        .sortable-drag {
+            opacity: 0.8;
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
     </style>
 </head>
@@ -444,10 +462,17 @@
                 <div class="project-name">{{ project }}</div>
                 <div class="priority-column priority-1">
                     <div class="priority-header">Priority 1</div>
-                    <ul class="task-list">
+                    <ul class="task-list"
+                        @dragover="dragOver($event, 1)"
+                        @dragleave="dragLeave"
+                        @drop="drop($event, 1)">
                         <li v-for="card in getPriorityCards(project, 1)" 
                             :key="card.doc_id" 
                             class="task-item"
+                            :data-card-id="card.doc_id"
+                            draggable="true"
+                            @dragstart="dragStart($event, card)"
+                            @dragend="dragEnd"
                             @click="showCardDetails(card)">
                             {{ card.metadata.task_name }}
                         </li>
@@ -455,10 +480,17 @@
                 </div>
                 <div class="priority-column priority-2">
                     <div class="priority-header">Priority 2</div>
-                    <ul class="task-list">
+                    <ul class="task-list"
+                        @dragover="dragOver($event, 2)"
+                        @dragleave="dragLeave"
+                        @drop="drop($event, 2)">
                         <li v-for="card in getPriorityCards(project, 2)" 
                             :key="card.doc_id" 
                             class="task-item"
+                            :data-card-id="card.doc_id"
+                            draggable="true"
+                            @dragstart="dragStart($event, card)"
+                            @dragend="dragEnd"
                             @click="showCardDetails(card)">
                             {{ card.metadata.task_name }}
                         </li>
@@ -466,10 +498,17 @@
                 </div>
                 <div class="priority-column priority-3">
                     <div class="priority-header">Priority 3</div>
-                    <ul class="task-list">
+                    <ul class="task-list"
+                        @dragover="dragOver($event, 3)"
+                        @dragleave="dragLeave"
+                        @drop="drop($event, 3)">
                         <li v-for="card in getPriorityCards(project, 3)" 
                             :key="card.doc_id" 
                             class="task-item"
+                            :data-card-id="card.doc_id"
+                            draggable="true"
+                            @dragstart="dragStart($event, card)"
+                            @dragend="dragEnd"
                             @click="showCardDetails(card)">
                             {{ card.metadata.task_name }}
                         </li>
@@ -520,7 +559,8 @@
                     selectedProject: '',
                     isCreating: false,
                     isEditing: false,
-                    selectedCard: null
+                    selectedCard: null,
+                    draggedCard: null
                 }
             },
             computed: {
@@ -544,7 +584,7 @@
                     };
 
                     this.ws.onmessage = (event) => {
-                        console.log(event.data)
+                        // console.log(event.data)
                         if (event.data === "<refresh>") {
                             this.fetchCards();
                             return;
@@ -740,17 +780,50 @@
                         card.metadata.project_name === project && 
                         card.metadata.estimated_priority === priority
                     );
+                },
+                dragStart(event, card) {
+                    this.draggedCard = card;
+                    event.target.classList.add('dragging');
+                },
+                dragEnd(event) {
+                    event.target.classList.remove('dragging');
+                    this.draggedCard = null;
+                },
+                dragOver(event, priority) {
+                    event.preventDefault();
+                    event.currentTarget.classList.add('drag-over');
+                },
+                dragLeave(event) {
+                    event.currentTarget.classList.remove('drag-over');
+                },
+                drop(event, priority) {
+                    event.preventDefault();
+                    event.currentTarget.classList.remove('drag-over');
+                    
+                    if (this.draggedCard) {
+                        this.updateTaskPriority(this.draggedCard.doc_id, priority);
+                    }
+                },
+                updateTaskPriority(cardId, newPriority) {
+                    const token = window.location.pathname.split('/').pop();
+                    fetch(`/todos/update_priority/${cardId}/${newPriority}/${token}`, {
+                        method: 'POST'
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to update priority');
+                        this.fetchCards();
+                    })
+                    .catch(error => console.error('Error updating priority:', error));
                 }
             },
             mounted() {
                 this.connect();
                 this.fetchCards();
-                // Refresh cards every 30 seconds
-                // setInterval(this.fetchCards, 30000);
             }
         }).mount('#app')
     </script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </body>
 </html>

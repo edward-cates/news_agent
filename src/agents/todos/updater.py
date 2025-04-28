@@ -20,7 +20,7 @@ from .summarizer import read_todos
 def overwrite_todo_document(
     doc_id: str,
     task_name: str,
-    body_html: str,
+    description: str,
     estimated_priority: int,
     time_sensitivity: int,
     appended_notes: str,
@@ -30,7 +30,7 @@ def overwrite_todo_document(
 
     :param: doc_id: str: The ID of the todo document to update.
     :param: task_name: str: The name of the task to save the todo document to.
-    :param: body_html: str: The html body of the todo document.
+    :param: description: str: The description of the task.
     :param: estimated_priority: int: The estimated priority of the todo document (1-3).
     :param: time_sensitivity: int: The time sensitivity of the todo document, where 1 is within a day or two, 2 is within a week or month, and 3 is not time sensitive.
     :param: appended_notes: str: A JSON-parsable list of string notes to append to the todo document.
@@ -62,6 +62,8 @@ def overwrite_todo_document(
         "task_name": task_name,
         "estimated_priority": estimated_priority,
         "time_sensitivity": time_sensitivity,
+        "description": description,
+        "appended_notes": appended_notes,
     }
     with open(metadata_path, "w") as f:
         print("Writing metadata to: ", metadata_path)
@@ -76,7 +78,7 @@ def overwrite_todo_document(
             <div class="todo-time-sensitivity">Time sensitivity: {time_sensitivity}</div>
         </div>
         <div class="todo-title">{task_name}</div>
-        <div class="todo-body">{body_html}</div>
+        <div class="todo-body">{description}</div>
         <div class="todo-footer">
             <ul>
                 {appended_notes_html}

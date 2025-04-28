@@ -16,6 +16,7 @@ from fastapi.responses import Response, HTMLResponse, FileResponse, JSONResponse
 # from src.agent import Agent
 from src.agents.todos.todo_agent import TodoAgent
 from src.agents.todos.archiver import archive_todo_document
+from src.agents.todos.updater import overwrite_todo_document
 
 app = FastAPI()
 
@@ -95,6 +96,31 @@ async def edit_todo(todos_token: str, request: Request):
     data = await request.json()
     response: str = await call_todo_document_updater_agent(data["message"])
     return {"response": response}
+
+@app.post("/todos/update_priority/{task_id}/{new_priority}/{todos_token}", response_class=JSONResponse)
+async def update_task_priority(task_id: str, new_priority: int, todos_token: str):
+    if todos_token != os.getenv("TODOS_TOKEN"):
+        return Response(status_code=401)
+    
+    # Read current metadata
+    todos_dir = Path("local/archives/todos")
+    metadata_path = todos_dir / f"{task_id}.json"
+    if not metadata_path.exists():
+        return Response(status_code=404)
+    
+    metadata = json.loads(metadata_path.read_text())
+    
+    # Update the task with new priority
+    overwrite_todo_document(
+        doc_id=task_id,
+        task_name=metadata["task_name"],
+        description=metadata["description"],
+        estimated_priority=new_priority,
+        time_sensitivity=metadata["time_sensitivity"],
+        appended_notes=json.dumps(metadata["appended_notes"])
+    )
+    
+    return {"message": "Priority updated successfully"}
 
 @app.websocket("/todos/awfnq89h0n3984hn1098je0n9xf18n0398fn98n093jmf9")
 async def todos(websocket: WebSocket):

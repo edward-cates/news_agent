@@ -26,7 +26,7 @@ def _read_projects_json() -> dict:
 
 def create_todo_document(
     task_name: str,
-    body_html: str,
+    description: str,
     project_name: str,
     project_selection_reasoning: str,
     estimated_priority: int,
@@ -36,7 +36,7 @@ def create_todo_document(
     Save an atomic todo task document to disk with a unique ID.
 
     :param: task_name: str: The name of the task to save the todo document to.
-    :param: body_html: str: The html body of the todo document.
+    :param: description: str: The description of the task.
     :param: project_name: str: The name of the project to save the todo document to.
     :param: project_selection_reasoning: str: The reasoning for selecting the project that was chosen.
     :param: estimated_priority: int: The estimated priority of the todo document, 1-3.
@@ -59,7 +59,7 @@ def create_todo_document(
                 <div class="todo-time-sensitivity">Time sensitivity: {time_sensitivity}</div>
             </div>
             <div class="todo-title">{task_name}</div>
-            <div class="todo-body">{body_html}</div>
+            <div class="todo-body">{description}</div>
         </div>"""
         Path("local/archives/todos").mkdir(parents=True, exist_ok=True)
         with open(Path("local/archives/todos") / f"{doc_id}.txt", "w") as f:
@@ -71,6 +71,7 @@ def create_todo_document(
             "project_selection_reasoning": project_selection_reasoning,
             "estimated_priority": estimated_priority,
             "time_sensitivity": time_sensitivity,
+            "description": description,
         }
         metadata_path = Path("local/archives/todos") / f"{doc_id}.json"
         with open(metadata_path, "w") as f:
