@@ -424,6 +424,42 @@
             background: #fff;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
+
+        .priority-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .priority-button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .priority-button.priority-1 {
+            background: #dc3545;
+            color: white;
+        }
+
+        .priority-button.priority-2 {
+            background: #ffc107;
+            color: black;
+        }
+
+        .priority-button.priority-3 {
+            background: #28a745;
+            color: white;
+        }
+
+        .priority-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -530,6 +566,23 @@
                         <div>
                             <span class="label">Project:</span>
                             <span>{{ selectedCard.metadata.project_name }}</span>
+                        </div>
+                        <div class="priority-buttons">
+                            <button v-if="selectedCard.metadata.estimated_priority !== 1" 
+                                    @click="updateTaskPriority(selectedCard.doc_id, 1)"
+                                    class="priority-button priority-1">
+                                Set Priority 1
+                            </button>
+                            <button v-if="selectedCard.metadata.estimated_priority !== 2" 
+                                    @click="updateTaskPriority(selectedCard.doc_id, 2)"
+                                    class="priority-button priority-2">
+                                Set Priority 2
+                            </button>
+                            <button v-if="selectedCard.metadata.estimated_priority !== 3" 
+                                    @click="updateTaskPriority(selectedCard.doc_id, 3)"
+                                    class="priority-button priority-3">
+                                Set Priority 3
+                            </button>
                         </div>
                     </div>
                     <div v-html="selectedCard.contents" class="todo-doc"></div>
